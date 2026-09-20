@@ -47,6 +47,6 @@ variable "gateway" {
   type = string
 }
 
-variable "cloud_init_snippet_id" {
+variable "cloud_init_content" {
   type = string
 }

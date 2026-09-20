@@ -4,15 +4,23 @@ Provisiona VMs no Proxmox via código, usando o provider [bpg/proxmox](https://r
 Terraform e Terragrunt vivem no mesmo repositório (mesmo padrão da
 empresa): os módulos reutilizáveis ficam em `modules/`, e cada
 provedor/site tem sua própria árvore com os `terragrunt.hcl` de verdade.
-O cloud-init injetado em cada VM vem do repositório `cloud-init`.
+O template de cloud-init vem do repositório `cloud-init`, mas quem
+renderiza e sobe ele pro Proxmox é o próprio Terraform (não precisa
+mais copiar nada manualmente) - toda VM nova já nasce com a chave SSH
+pessoal e a do Rundeck autorizadas.
 
 ## Pré-requisitos
 
 - Terraform >= 1.5 e Terragrunt >= 0.60
 - Um template de VM no Proxmox com cloud-init habilitado (ver seção abaixo)
 - Um API Token do Proxmox dedicado ao Terraform (não usar `root@pam`)
-- O arquivo de cloud-init já copiado pro storage de snippets do Proxmox
-  (ver README do repositório `cloud-init`)
+- Acesso SSH ao host Proxmox via agente (`ssh-add -L` deve mostrar a
+  chave) para o usuário configurado no bloco `ssh` do provider - o
+  upload do snippet de cloud-init usa SSH, a API do Proxmox sozinha não
+  suporta isso
+- O repositório `cloud-init` clonado como pasta irmã deste (`../cloud-init`
+  a partir de `~/Projetos/Pessoal/`) - os `terragrunt.hcl` referenciam o
+  template de lá por caminho relativo
 
 ## Estrutura do repositório
 
@@ -76,8 +84,12 @@ terragrunt apply
 
 1. Crie uma pasta nova em `proxmox/homelab/` (ex.: `vm-jenkins/`).
 2. Copie o `terragrunt.hcl` de `vm-test/` como ponto de partida, ajustando
-   `name`, `vm_id` e `ip_address`.
+   `name`, `vm_id`, `ip_address` e o `hostname` passado pro `templatefile()`.
 3. Rode `terragrunt init` na pasta nova.
+
+A chave SSH do Rundeck é gerada uma vez pelo `deploy.sh` do repositório
+`rundeck` - se ainda não existir, rode o deploy do Rundeck primeiro (ou
+deixe o campo `rundeck_ssh_public_key` vazio temporariamente).
 
 Se um dia precisar de outro provedor/site (ex.: uma nuvem pública), crie
 uma pasta irmã de `proxmox/` (ex.: `oracle/`), com seu próprio

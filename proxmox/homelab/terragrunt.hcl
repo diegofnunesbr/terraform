@@ -17,6 +17,11 @@ provider "proxmox" {
   endpoint  = "${local.regional_config.locals.proxmox_endpoint}"
   api_token = "${get_env("PROXMOX_API_TOKEN", "")}"
   insecure  = true
+
+  ssh {
+    agent    = true
+    username = "diegofnunesbr"
+  }
 }
 EOF
 }

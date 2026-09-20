@@ -8,19 +8,26 @@ terraform {
 
 locals {
   regional_config = read_terragrunt_config(find_in_parent_folders("regional_config.hcl"))
+
+  cloud_init_content = templatefile("../../../../cloud-init/config/vm.yaml.tftpl", {
+    hostname               = "vm-test"
+    username               = "diegofnunesbr"
+    ssh_public_key         = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMypM4Y5sJkzT4gaLnb0sPopGFo1kHuHIDyJnWzbmwnx"
+    rundeck_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJS+wGkp5G9jc0trGEmcIpV7OAHPEBYU8RLXDtrnLhiC"
+  })
 }
 
 inputs = {
-  name                  = "vm-test"
-  node_name             = local.regional_config.locals.node_name
-  vm_id                 = 200
-  template_vm_id        = 9000
-  cpu_cores             = 2
-  memory_mb             = 2048
-  disk_datastore        = "local-lvm"
-  disk_size_gb          = 20
-  network_bridge        = "vmbr0"
-  ip_address            = "192.168.0.10/24"
-  gateway               = "192.168.0.1"
-  cloud_init_snippet_id = "local:snippets/test-vm.yaml"
+  name                = "vm-test"
+  node_name           = local.regional_config.locals.node_name
+  vm_id               = 200
+  template_vm_id      = 9000
+  cpu_cores           = 2
+  memory_mb           = 2048
+  disk_datastore      = "local-lvm"
+  disk_size_gb        = 20
+  network_bridge      = "vmbr0"
+  ip_address          = "192.168.0.10/24"
+  gateway             = "192.168.0.1"
+  cloud_init_content  = local.cloud_init_content
 }

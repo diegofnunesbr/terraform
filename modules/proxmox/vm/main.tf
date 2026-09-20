@@ -9,6 +9,17 @@ terraform {
   }
 }
 
+resource "proxmox_virtual_environment_file" "cloud_init" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = var.node_name
+
+  source_raw {
+    file_name = "${var.name}-cloud-init.yaml"
+    data      = var.cloud_init_content
+  }
+}
+
 resource "proxmox_virtual_environment_vm" "this" {
   name      = var.name
   node_name = var.node_name
@@ -49,6 +60,6 @@ resource "proxmox_virtual_environment_vm" "this" {
       }
     }
 
-    user_data_file_id = var.cloud_init_snippet_id
+    user_data_file_id = proxmox_virtual_environment_file.cloud_init.id
   }
 }
