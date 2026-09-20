@@ -1,25 +1,20 @@
+include "root" {
+  path = find_in_parent_folders()
+}
+
 terraform {
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.66"
-    }
-  }
+  source = "../../../modules/proxmox/vm"
 }
 
-provider "proxmox" {
-  endpoint  = var.proxmox_endpoint
-  api_token = var.proxmox_api_token
-  insecure  = true
+locals {
+  regional_config = read_terragrunt_config(find_in_parent_folders("regional_config.hcl"))
 }
 
-module "vm_test" {
-  source = "../../modules/proxmox-vm"
-
+inputs = {
   name                  = "vm-test"
-  node_name             = var.node_name
+  node_name             = local.regional_config.locals.node_name
   vm_id                 = 200
-  template_vm_id        = var.template_vm_id
+  template_vm_id        = 9000
   cpu_cores             = 2
   memory_mb             = 2048
   disk_datastore        = "local-lvm"

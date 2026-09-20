@@ -1,11 +1,14 @@
 # terraform
 
 Provisiona VMs no Proxmox via código, usando o provider [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox).
+Terraform e Terragrunt vivem no mesmo repositório (mesmo padrão da
+empresa): os módulos reutilizáveis ficam em `modules/`, e cada
+provedor/site tem sua própria árvore com os `terragrunt.hcl` de verdade.
 O cloud-init injetado em cada VM vem do repositório `cloud-init`.
 
 ## Pré-requisitos
 
-- Terraform >= 1.5
+- Terraform >= 1.5 e Terragrunt >= 0.60
 - Um template de VM no Proxmox com cloud-init habilitado (ver seção abaixo)
 - Um API Token do Proxmox dedicado ao Terraform (não usar `root@pam`)
 - O arquivo de cloud-init já copiado pro storage de snippets do Proxmox
@@ -16,16 +19,17 @@ O cloud-init injetado em cada VM vem do repositório `cloud-init`.
 ```text
 terraform/
 ├── modules/
-│   └── proxmox-vm/            # módulo reutilizável de VM
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
-└── environments/
-    └── homelab/                # instância real: a VM de teste
-        ├── main.tf
-        ├── variables.tf
-        ├── outputs.tf
-        └── terraform.tfvars.example
+│   └── proxmox/
+│       └── vm/                     # módulo reutilizável de VM
+│           ├── main.tf
+│           ├── variables.tf
+│           └── outputs.tf
+└── proxmox/                         # provedor (site/nuvem)
+    └── homelab/                     # "região"/site (só tem um, por enquanto)
+        ├── terragrunt.hcl           # remote_state + gera o provider
+        ├── regional_config.hcl      # config compartilhada do site (endpoint, node)
+        └── vm-test/
+            └── terragrunt.hcl       # instância real: aponta pro módulo + inputs
 ```
 
 ## Criar o template de VM (uma vez só)
@@ -60,13 +64,21 @@ só aparece uma vez.
 ## Uso
 
 ```bash
-cd environments/homelab
-cp terraform.tfvars.example terraform.tfvars   # preencha com os valores reais
-terraform init
-terraform plan
-terraform apply
+export PROXMOX_API_TOKEN="terraform@pve!terraform=REPLACE_ME"
+
+cd proxmox/homelab/vm-test
+terragrunt init
+terragrunt plan
+terragrunt apply
 ```
 
-**Nunca edite `terraform.tfvars.example`** com valores reais - ele é só o
-template e fica versionado. `terraform.tfvars` (a cópia real) nunca vai pro
-git (`.gitignore`).
+## Criar uma VM nova
+
+1. Crie uma pasta nova em `proxmox/homelab/` (ex.: `vm-jenkins/`).
+2. Copie o `terragrunt.hcl` de `vm-test/` como ponto de partida, ajustando
+   `name`, `vm_id` e `ip_address`.
+3. Rode `terragrunt init` na pasta nova.
+
+Se um dia precisar de outro provedor/site (ex.: uma nuvem pública), crie
+uma pasta irmã de `proxmox/` (ex.: `oracle/`), com seu próprio
+`regional_config.hcl` e `terragrunt.hcl`.
