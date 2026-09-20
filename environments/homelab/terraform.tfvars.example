@@ -1,0 +1,4 @@
+proxmox_endpoint  = "https://192.168.0.3:8006/"
+proxmox_api_token = "terraform@pve!terraform=REPLACE_ME"
+node_name         = "proxmox"
+template_vm_id    = 9000
