@@ -72,7 +72,8 @@ só aparece uma vez.
 ## Uso
 
 ```bash
-export PROXMOX_API_TOKEN="terraform@pve!terraform=REPLACE_ME"
+read -rsp "Token Proxmox (terraform@pve!terraform=...): " PROXMOX_API_TOKEN; echo
+export PROXMOX_API_TOKEN
 
 cd proxmox/homelab/vm-test
 terragrunt init
