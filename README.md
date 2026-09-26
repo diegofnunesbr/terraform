@@ -74,15 +74,30 @@ pveum aclmod / -user terraform@pve -role PVEAdmin
 pveum user token add terraform@pve terraform --privsep 0
 ```
 
-Guarde o token impresso (formato `terraform@pve!terraform=<segredo>`) - ele
-só aparece uma vez.
+(Ou pela interface: `Datacenter > Permissions > Users` com realm
+`Proxmox VE authentication server`, permissão `PVEAdmin` em `/`, e em `API
+Tokens` um token `terraform` com `Privilege Separation` desmarcado.)
+
+O token impresso (formato `terraform@pve!terraform=<segredo>`) só aparece
+uma vez - guarde direto no cofre (`pass`, ver README da sua máquina / nota
+do `.bashrc`), colando o valor completo:
+
+```bash
+pass insert -m proxmox/api-token
+```
+
+Se perder o segredo, não tem como recuperar: remova o token
+(`pveum user token remove terraform@pve terraform`), crie de novo e
+sobrescreva no cofre com `pass insert -m -f proxmox/api-token`.
 
 ## Uso
 
-```bash
-read -rsp "Token Proxmox (terraform@pve!terraform=...): " PROXMOX_API_TOKEN; echo
-export PROXMOX_API_TOKEN
+O `terragrunt`/`terraform` do `.bashrc` é uma função que lê o token do
+cofre só na hora de rodar (`PROXMOX_API_TOKEN="$(pass show proxmox/api-token)"`,
+junto dos tokens da Cloudflare e do GitLab) - pede a senha do cofre uma
+vez e ninguém precisa exportar nada:
 
+```bash
 cd proxmox/homelab/vm-test
 terragrunt init
 terragrunt plan
@@ -93,12 +108,13 @@ terragrunt apply
 
 1. Crie uma pasta nova em `proxmox/homelab/` (ex.: `vm-jenkins/`).
 2. Copie o `terragrunt.hcl` de `vm-test/` como ponto de partida, ajustando
-   `name`, `vm_id`, `ip_address` e o `hostname` passado pro `templatefile()`.
+   `name`, `vm_id`, `ip_address` e as receitas em `cloud_init_recipes`
+   (ex.: `["admins", "agents", "docker"]` - lista no README do repositório
+   `cloud-init`).
 3. Rode `terragrunt init` na pasta nova.
 
-A chave SSH do Rundeck é gerada uma vez pelo `deploy.sh` do repositório
-`rundeck` - se ainda não existir, rode o deploy do Rundeck primeiro (ou
-deixe o campo `rundeck_ssh_public_key` vazio temporariamente).
+As chaves SSH (a sua e a do Rundeck) vêm da receita `admins` do servidor
+de cloud-init - trocar uma chave é mudar a receita lá, não aqui.
 
 Se um dia precisar de outro provedor/site (ex.: uma nuvem pública), crie
 uma pasta irmã de `proxmox/` (ex.: `oracle/`), com seu próprio
