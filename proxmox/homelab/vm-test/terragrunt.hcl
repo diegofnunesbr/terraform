@@ -8,13 +8,6 @@ terraform {
 
 locals {
   regional_config = read_terragrunt_config(find_in_parent_folders("regional_config.hcl"))
-
-  cloud_init_content = templatefile("../../../../cloud-init/config/vm.yaml.tftpl", {
-    hostname               = "vm-test"
-    username               = "diegofnunesbr"
-    ssh_public_key         = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMypM4Y5sJkzT4gaLnb0sPopGFo1kHuHIDyJnWzbmwnx"
-    rundeck_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJS+wGkp5G9jc0trGEmcIpV7OAHPEBYU8RLXDtrnLhiC"
-  })
 }
 
 inputs = {
@@ -29,5 +22,5 @@ inputs = {
   network_bridge      = "vmbr0"
   ip_address          = "192.168.0.10/24"
   gateway             = "192.168.0.1"
-  cloud_init_content  = local.cloud_init_content
+  cloud_init_recipes  = ["admins", "agents"]
 }

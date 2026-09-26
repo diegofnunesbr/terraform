@@ -6,6 +6,28 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.66"
     }
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = "~> 2.3"
+    }
+  }
+}
+
+data "cloudinit_config" "this" {
+  gzip          = false
+  base64_encode = false
+
+  part {
+    content_type = "text/x-include-url"
+    content      = "${var.cloud_init_url}/${join(",", var.cloud_init_recipes)}"
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    content = "#cloud-config\n${yamlencode(merge({
+      hostname         = var.name
+      manage_etc_hosts = true
+    }, var.cloud_init_extra))}"
   }
 }
 
@@ -16,7 +38,7 @@ resource "proxmox_virtual_environment_file" "cloud_init" {
 
   source_raw {
     file_name = "${var.name}-cloud-init.yaml"
-    data      = var.cloud_init_content
+    data      = data.cloudinit_config.this.rendered
   }
 }
 

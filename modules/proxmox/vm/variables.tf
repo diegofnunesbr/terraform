@@ -47,6 +47,17 @@ variable "gateway" {
   type = string
 }
 
-variable "cloud_init_content" {
-  type = string
+variable "cloud_init_recipes" {
+  type    = list(string)
+  default = ["admins"]
+}
+
+variable "cloud_init_url" {
+  type    = string
+  default = "https://cloud-init.diegofnunesbr.com"
+}
+
+variable "cloud_init_extra" {
+  type    = any
+  default = {}
 }

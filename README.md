@@ -4,10 +4,19 @@ Provisiona VMs no Proxmox via código, usando o provider [bpg/proxmox](https://r
 Terraform e Terragrunt vivem no mesmo repositório (mesmo padrão da
 empresa): os módulos reutilizáveis ficam em `modules/`, e cada
 provedor/site tem sua própria árvore com os `terragrunt.hcl` de verdade.
-O template de cloud-init vem do repositório `cloud-init`, mas quem
-renderiza e sobe ele pro Proxmox é o próprio Terraform (não precisa
-mais copiar nada manualmente) - toda VM nova já nasce com a chave SSH
-pessoal e a do Rundeck autorizadas.
+O cloud-init de cada VM vem do servidor de receitas do repositório
+`cloud-init` (`https://cloud-init.diegofnunesbr.com/`), no mesmo modelo da
+empresa: o módulo monta um user-data em duas partes (`cloudinit_config`,
+provider `hashicorp/cloudinit`) e sobe pro Proxmox como snippet:
+
+- `text/x-include-url` com `https://cloud-init.diegofnunesbr.com/<receitas>`
+  (as receitas genéricas, escolhidas em `cloud_init_recipes`)
+- `text/cloud-config` com o que é só daquela VM (`hostname` e o que vier
+  em `cloud_init_extra`)
+
+Ex.: `cloud_init_recipes = ["admins", "agents", "docker"]` - a VM já nasce
+com os usuários (inclusive o `rundeck`), monitoramento no Mimir/Grafana e
+Docker. Receitas disponíveis no README do repositório `cloud-init`.
 
 ## Pré-requisitos
 
@@ -18,9 +27,8 @@ pessoal e a do Rundeck autorizadas.
   chave) para o usuário configurado no bloco `ssh` do provider - o
   upload do snippet de cloud-init usa SSH, a API do Proxmox sozinha não
   suporta isso
-- O repositório `cloud-init` clonado como pasta irmã deste (`../cloud-init`
-  a partir de `~/Projetos/Pessoal/`) - os `terragrunt.hcl` referenciam o
-  template de lá por caminho relativo
+- O servidor de receitas do repositório `cloud-init` no ar e acessível
+  pela VM no primeiro boot (`https://cloud-init.diegofnunesbr.com/`)
 
 ## Estrutura do repositório
 
